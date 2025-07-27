@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Keuangan Gelombang Laut</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            padding-top: 40px;
+        }
+        .header {
+            background: linear-gradient(90deg, #4CAF50, #008000);
+            color: #fff;
+            text-align: center;
+            padding: 30px 0;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .card-body {
+            padding: 20px;
+        }
+        .form-group label {
+            font-size: 14px;
+        }
+        .result {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .result h3 {
+            color: #28a745;
+        }
+        .result div {
+            margin: 10px 0;
+        }
+        .result .status {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .status-layak {
+            color: green;
+        }
+        .status-impas {
+            color: orange;
+        }
+        .status-tidak-layak {
+            color: red;
+        }
+        .graph-container {
+            margin-top: 30px;
+        }
+        .graph-container canvas {
+            width: 100% !important;
+            max-width: 800px;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Dashboard Analisis Keuangan Gelombang Laut</h1>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Card for Technical Parameters -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4>Parameter Teknis</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="form-group">
+                            <label for="tinggi-gelombang">Tinggi Gelombang Laut (m):</label>
+                            <input type="number" class="form-control" id="tinggi-gelombang" name="tinggi-gelombang" value="{{ request.form['tinggi-gelombang'] if request.form.get('tinggi-gelombang') else 1.5 }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="periode-gelombang">Periode Gelombang Laut (detik):</label>
+                            <input type="number" class="form-control" id="periode-gelombang" name="periode-gelombang" value="{{ request.form['periode-gelombang'] if request.form.get('periode-gelombang') else 10 }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="lebar-serap">Lebar Serap (m):</label>
+                            <input type="number" class="form-control" id="lebar-serap" name="lebar-serap" value="{{ request.form['lebar-serap'] if request.form.get('lebar-serap') else 30 }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="efisiensi-konversi">Efisiensi Konversi (%):</label>
+                            <input type="number" class="form-control" id="efisiensi-konversi" name="efisiensi-konversi" value="{{ request.form['efisiensi-konversi'] if request.form.get('efisiensi-konversi') else 85 }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="waktu-operasional">Waktu Operasional (jam):</label>
+                            <input type="number" class="form-control" id="waktu-operasional" name="waktu-operasional" value="{{ request.form['waktu-operasional'] if request.form.get('waktu-operasional') else 24 }}">
+                        </div>
+                        <button type="submit" class="btn btn-success">Hitung</button>
+                    </form>
+
+                    <!-- Hasil Perhitungan Daya Gelombang dan Produksi Energi -->
+                    {% if data %}
+                    <div class="result">
+                        <h3>Hasil Perhitungan</h3>
+                        <div><strong>Daya Gelombang Laut (kW/m):</strong> {{ data.daya_gelombang }}</div>
+                        <div><strong>Produksi Energi Listrik (kWh/tahun):</strong> {{ data.produksi_energi }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Card for Financial Parameters -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4>Parameter Finansial</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="form-group">
+                            <label for="capex">CAPEX Total (Rp):</label>
+                            <input type="number" class="form-control" id="capex" name="capex" value="{{ request.form['capex'] if request.form.get('capex') else 100000000 }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="opex">OPEX Total (Rp):</label>
+                            <input type="number" class="form-control" id="opex" name="opex" value="{{ request.form['opex'] if request.form.get('opex') else 5000000 }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="diskonto">Faktor Diskonto (%):</label>
+                            <input type="number" class="form-control" id="diskonto" name="diskonto" value="{{ request.form['diskonto'] if request.form.get('diskonto') else 10 }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="harga-listrik">Harga Jual Listrik (Rp/kWh):</label>
+                            <input type="number" class="form-control" id="harga-listrik" name="harga-listrik" value="{{ request.form['harga-listrik'] if request.form.get('harga-listrik') else 1000 }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="lci">Levelized Cost of Investment (LCI):</label>
+                            <input type="number" class="form-control" id="lci" name="lci" value="{{ request.form['lci'] if request.form.get('lci') else 50 }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="coe">Cost of Energy (COE):</label>
+                            <input type="number" class="form-control" id="coe" name="coe" value="{{ request.form['coe'] if request.form.get('coe') else 100 }}">
+                        </div>
+                        <button type="submit" class="btn btn-success">Hitung</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if data %}
+    <!-- Hasil Perhitungan Finansial -->
+    <div class="result">
+        <h3>Hasil Perhitungan Finansial</h3>
+        <div><strong>NPV (Rp):</strong> {{ data.npv }} / <span class="status {{ 'status-layak' if data.status_np == 'Layak' else 'status-impas' if data.status_np == 'Impas' else 'status-tidak-layak' }}">{{ data.status_np }}</span></div>
+        <div><strong>IRR (%):</strong> {{ data.irr }} / <span class="status {{ 'status-layak' if data.status_irr == 'Layak' else 'status-tidak-layak' }}">{{ data.status_irr }}</span></div>
+        <div><strong>Payback Period (tahun):</strong> {{ data.pp }} / <span class="status {{ 'status-layak' if data.status_pp == 'Layak' else 'status-tidak-layak' }}">{{ data.status_pp }}</span></div>
+        <div><strong>DPP (tahun):</strong> {{ data.dpp }} / <span class="status {{ 'status-layak' if data.status_dpp == 'Layak' else 'status-tidak-layak' }}">{{ data.status_dpp }}</span></div>
+        <div><strong>PI (Profitability Index):</strong> {{ data.pi }} / <span class="status {{ 'status-layak' if data.status_pi == 'Layak' else 'status-tidak-layak' }}">{{ data.status_pi }}</span></div>
+        <div><strong>LCOE (Rp/kWh):</strong> {{ data.lcoe }} / <span class="status {{ 'status-layak' if data.status_lcoe == 'Layak' else 'status-tidak-layak' }}">{{ data.status_lcoe }}</span></div>
+    </div>
+    {% endif %}
+
+    <!-- Grafik Arus Kas Tahunan -->
+    <div class="graph-container">
+        <h4>Grafik Arus Kas Tahunan</h4>
+        <canvas id="grafikArusKasTahunan"></canvas>
+    </div>
+
+    <!-- Grafik Arus Kas Diskonto -->
+    <div class="graph-container">
+        <h4>Grafik Arus Kas Diskonto</h4>
+        <canvas id="grafikArusKasDiskonto"></canvas>
+    </div>
+
+    <!-- Grafik Kumulatif Arus Kas Diskonto -->
+    <div class="graph-container">
+        <h4>Grafik Kumulatif Arus Kas Diskonto</h4>
+        <canvas id="grafikKumulatifArusKasDiskonto"></canvas>
+    </div>
+
+    <!-- Grafik Perbandingan PP, DPP, dan PI -->
+    <div class="graph-container">
+        <h4>Perbandingan PP, DPP, dan PI</h4>
+        <canvas id="grafikPPDPPPI"></canvas>
+    </div>
+
+    <!-- Grafik IRR vs Discount Rate -->
+    <div class="graph-container">
+        <h4>Grafik IRR vs Discount Rate</h4>
+        <canvas id="grafikIRRvsDiscountRate"></canvas>
+    </div>
+
+    <!-- Grafik LCOE vs Tarif Jual Listrik -->
+    <div class="graph-container">
+        <h4>Grafik LCOE vs Tarif Jual Listrik</h4>
+        <canvas id="grafikLCOEvTarifJualListrik"></canvas>
+    </div>
+</div>
+
+<script>
+// Ambil data yang dikirim dari backend Flask
+const data = {{ data|tojson }};
+console.log(data);
+
+// Grafik Arus Kas Tahunan
+const ctx1 = document.getElementById('grafikArusKasTahunan').getContext('2d');
+new Chart(ctx1, {
+    type: 'line',
+    data: {
+        labels: data.years,
+        datasets: [{
+            label: 'Pendapatan',
+            data: data.pendapatan_tahunan,
+            borderColor: 'green',
+            fill: false
+        }, {
+            label: 'Biaya',
+            data: data.biaya_tahunan,
+            borderColor: 'red',
+            fill: false
+        }]
+    }
+});
+
+// Grafik Arus Kas Diskonto
+const ctx2 = document.getElementById('grafikArusKasDiskonto').getContext('2d');
+new Chart(ctx2, {
+    type: 'line',
+    data: {
+        labels: data.years,
+        datasets: [{
+            label: 'Arus Kas Diskonto',
+            data: data.pendapatan_tahunan.map((value, index) => value * (1 / (1 + 0.1) ** (index + 1))),
+            borderColor: 'blue',
+            fill: false
+        }]
+    }
+});
+
+// Grafik Kumulatif Arus Kas Diskonto
+const ctx3 = document.getElementById('grafikKumulatifArusKasDiskonto').getContext('2d');
+new Chart(ctx3, {
+    type: 'line',
+    data: {
+        labels: data.years,
+        datasets: [{
+            label: 'Kumulatif Arus Kas Diskonto',
+            data: data.pendapatan_tahunan.map((value, index) => {
+                return data.pendapatan_tahunan.slice(0, index + 1).reduce((sum, val) => sum + val, 0) * (1 / (1 + 0.1) ** (index + 1));
+            }),
+            borderColor: 'purple',
+            fill: false
+        }]
+    }
+});
+
+// Perbandingan PP, DPP, dan PI
+const ctx4 = document.getElementById('grafikPPDPPPI').getContext('2d');
+new Chart(ctx4, {
+    type: 'bar',
+    data: {
+        labels: ['PP', 'DPP', 'PI'],
+        datasets: [{
+            label: 'Perbandingan PP, DPP, dan PI',
+            data: [data.pp, data.dpp, data.pi],
+            backgroundColor: ['green', 'blue', 'orange']
+        }]
+    }
+});
+
+// Grafik IRR vs Discount Rate
+const ctx5 = document.getElementById('grafikIRRvsDiscountRate').getContext('2d');
+new Chart(ctx5, {
+    type: 'line',
+    data: {
+        labels: data.years,
+        datasets: [{
+            label: 'IRR',
+            data: Array(data.years.length).fill(data.irr),
+            borderColor: 'red',
+            fill: false
+        }, {
+            label: 'Discount Rate',
+            data: Array(data.years.length).fill(data.diskonto),
+            borderColor: 'blue',
+            fill: false
+        }]
+    }
+});
+
+// Grafik LCOE vs Tarif Jual Listrik
+const ctx6 = document.getElementById('grafikLCOEvTarifJualListrik').getContext('2d');
+new Chart(ctx6, {
+    type: 'line',
+    data: {
+        labels: data.years,
+        datasets: [{
+            label: 'LCOE',
+            data: Array(data.years.length).fill(data.lcoe),
+            borderColor: 'purple',
+            fill: false
+        }, {
+            label: 'Harga Jual Listrik',
+            data: Array(data.years.length).fill(data.harga_listrik),
+            borderColor: 'green',
+            fill: false
+        }]
+    }
+});
+</script>
+
+</body>
+</html>
